@@ -1,8 +1,10 @@
 services:
-  - type: web
-    name: mqtt-firebase-service
+  - type: worker
+    name: mqtt-firebase-worker
     runtime: node
     plan: free
     buildCommand: "npm install"
     startCommand: "npm start"
-    autoDeploy: true
+    envVars:
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+        fromSecret: mqtt-firebase-service-credentials
