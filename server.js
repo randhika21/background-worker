@@ -1,14 +1,10 @@
-const express = require('express');
 const mqtt = require('mqtt');
 const admin = require('firebase-admin');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Ambil kredensial dari environment variable (pastikan sudah diset di Render)
+// Ambil kredensial dari environment variable
 const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
 
-// Fix private key (ganti \\n jadi newline beneran)
+// Fix newline di private_key
 serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
 // Inisialisasi Firebase Admin
@@ -17,9 +13,8 @@ admin.initializeApp({
   databaseURL: 'https://nyoba-b974e-default-rtdb.asia-southeast1.firebasedatabase.app'
 });
 
-const db = admin.firestore(); // pakai Firestore, bisa diganti admin.database() jika pake Realtime DB
+const db = admin.firestore();
 
-// MQTT setup
 const client = mqtt.connect('mqtt://broker.hivemq.com');
 
 const topicSuhu = 'awikwoksuhu';
@@ -60,21 +55,11 @@ client.on('message', async (topic, message) => {
       console.error('Gagal menyimpan ke Firebase:', error);
     }
 
-    // Reset data supaya gak dobel
-    dataSensor = {
-      suhu: null,
-      kelembapan: null,
-      timestamp: null
-    };
+    // Reset supaya gak dobel
+    dataSensor = { suhu: null, kelembapan: null, timestamp: null };
   }
 });
 
-// Web server endpoint buat health check / simple response
-app.get('/', (req, res) => {
-  res.send('Server MQTT + Firebase berjalan lancar 👍');
-});
-
-// Start web server supaya Render bisa detect open port
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+client.on('error', (error) => {
+  console.error('MQTT error:', error);
 });
